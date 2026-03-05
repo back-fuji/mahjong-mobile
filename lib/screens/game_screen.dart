@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -170,14 +172,38 @@ class _GameScreenState extends State<GameScreen> {
                               children: myPlayer.melds.map((m) {
                                 return Row(
                                   mainAxisSize: MainAxisSize.min,
-                                  children: m.tiles
-                                      .map(
-                                        (t) => Padding(
-                                          padding: const EdgeInsets.only(right: 2),
-                                          child: TileWidget(tile: t, size: 28),
-                                        ),
-                                      )
-                                      .toList(),
+                                  children: m.tiles.asMap().entries.map((e) {
+                                    final ti = e.key;
+                                    final t = e.value;
+                                    final isCalled = m.calledTile != null &&
+                                        t.index == m.calledTile!.index;
+                                    final isFaceDown = (m.type == 'ankan') &&
+                                        (ti == 0 || ti == 3);
+                                    Widget tileWidget = isFaceDown
+                                        ? Container(
+                                            width: 28,
+                                            height: 28 * 1.35,
+                                            decoration: BoxDecoration(
+                                              color: Colors.green.shade900,
+                                              border: Border.all(
+                                                  color: Colors.amber.shade700),
+                                              borderRadius:
+                                                  BorderRadius.circular(2),
+                                            ),
+                                          )
+                                        : TileWidget(tile: t, size: 28);
+                                    if (isCalled) {
+                                      tileWidget = Transform.rotate(
+                                        angle: math.pi / 2,
+                                        child: tileWidget,
+                                      );
+                                    }
+                                    return Padding(
+                                      padding:
+                                          const EdgeInsets.only(right: 2),
+                                      child: tileWidget,
+                                    );
+                                  }).toList(),
                                 );
                               }).toList(),
                             ),

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../models/player_filtered.dart';
@@ -70,16 +72,31 @@ class OpponentAreaWidget extends StatelessWidget {
                       padding: const EdgeInsets.only(left: 4),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: m.tiles
-                            .map(
-                              (t) => Padding(
+                        children: m.tiles.asMap().entries
+                            .map((e) {
+                              final ti = e.key;
+                              final t = e.value;
+                              final isCalled = m.calledTile != null &&
+                                  t.index == m.calledTile!.index;
+                              final isFaceDown = (m.type == 'ankan') &&
+                                  (ti == 0 || ti == 3);
+                              Widget tileWidget = isFaceDown
+                                  ? _faceDownTile(faceDownSize * 0.9)
+                                  : TileWidget(
+                                      tile: t,
+                                      size: faceDownSize * 0.9,
+                                    );
+                              if (isCalled) {
+                                tileWidget = Transform.rotate(
+                                  angle: math.pi / 2,
+                                  child: tileWidget,
+                                );
+                              }
+                              return Padding(
                                 padding: const EdgeInsets.only(right: 2),
-                                child: TileWidget(
-                                  tile: t,
-                                  size: faceDownSize * 0.9,
-                                ),
-                              ),
-                            )
+                                child: tileWidget,
+                              );
+                            })
                             .toList(),
                       ),
                     ),
@@ -125,19 +142,31 @@ class OpponentAreaWidget extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 2),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: m.tiles
-                                .map(
-                                  (t) => Padding(
+                            children: m.tiles.asMap().entries
+                                .map((e) {
+                                  final ti = e.key;
+                                  final t = e.value;
+                                  final isCalled = m.calledTile != null &&
+                                      t.index == m.calledTile!.index;
+                                  final isFaceDown = (m.type == 'ankan') &&
+                                      (ti == 0 || ti == 3);
+                                  Widget tileWidget = isFaceDown
+                                      ? _faceDownTile(faceDownSize * 0.6)
+                                      : TileWidget(
+                                          tile: t,
+                                          size: faceDownSize * 0.6,
+                                        );
+                                  // isCalled牌はさらに90度追加回転（通常の90度に重ねて横向き）
+                                  const baseAngle = 1.5708; // math.pi / 2 (既存の回転)
+                                  final extraAngle = isCalled ? math.pi / 2 : 0.0;
+                                  return Padding(
                                     padding: const EdgeInsets.only(right: 2),
                                     child: Transform.rotate(
-                                      angle: 1.5708,
-                                      child: TileWidget(
-                                        tile: t,
-                                        size: faceDownSize * 0.6,
-                                      ),
+                                      angle: baseAngle + extraAngle,
+                                      child: tileWidget,
                                     ),
-                                  ),
-                                )
+                                  );
+                                })
                                 .toList(),
                           ),
                         ),
@@ -195,19 +224,30 @@ class OpponentAreaWidget extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 2),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: m.tiles
-                                .map(
-                                  (t) => Padding(
+                            children: m.tiles.asMap().entries
+                                .map((e) {
+                                  final ti = e.key;
+                                  final t = e.value;
+                                  final isCalled = m.calledTile != null &&
+                                      t.index == m.calledTile!.index;
+                                  final isFaceDown = (m.type == 'ankan') &&
+                                      (ti == 0 || ti == 3);
+                                  Widget tileWidget = isFaceDown
+                                      ? _faceDownTile(faceDownSize * 0.6)
+                                      : TileWidget(
+                                          tile: t,
+                                          size: faceDownSize * 0.6,
+                                        );
+                                  const baseAngle = -1.5708; // 既存の回転
+                                  final extraAngle = isCalled ? math.pi / 2 : 0.0;
+                                  return Padding(
                                     padding: const EdgeInsets.only(right: 2),
                                     child: Transform.rotate(
-                                      angle: -1.5708,
-                                      child: TileWidget(
-                                        tile: t,
-                                        size: faceDownSize * 0.6,
-                                      ),
+                                      angle: baseAngle + extraAngle,
+                                      child: tileWidget,
                                     ),
-                                  ),
-                                )
+                                  );
+                                })
                                 .toList(),
                           ),
                         ),
