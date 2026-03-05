@@ -409,7 +409,17 @@ class _GameScreenState extends State<GameScreen> {
                         'tiles': opt.tiles,
                       });
                     },
-                    child: Text(opt.tiles.join(', ')),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: opt.tiles.map((tileId) => Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Text(
+                          tileLabel(tileId),
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      )).toList(),
+                    ),
                   ),
                 ),
               ),
