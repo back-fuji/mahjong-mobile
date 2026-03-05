@@ -561,50 +561,271 @@ class _GameScreenState extends State<GameScreen> {
       color: Colors.black54,
       child: Center(
         child: Card(
-          margin: const EdgeInsets.all(24),
+          margin: const EdgeInsets.all(16),
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (hasAgari) ...[
-                  Text(
-                    result.agari!.first.isTsumo ? 'ツモ' : 'ロン',
-                    style: TextStyle(
-                      color: Colors.orange.shade400,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (hasAgari)
+                    ..._buildAgariResult(result.agari!.first)
+                  else if (result.draw != null)
+                    ..._buildDrawResult(result.draw!)
+                  else
+                    const Text('局終了'),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () =>
+                          widget.socketService.sendAction({'type': 'next_round'}),
+                      child: const Text('次局'),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  ...result.agari!.map((a) {
-                    final winner = gs.players[a.winner];
-                    return Text(
-                      '${_windName(winner.seatWind)} ${winner.name} ${winner.score}点',
-                    );
-                  }),
-                ] else if (result.draw != null) ...[
-                  const Text(
-                    '流局',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  Text('テンパイ: ${result.draw!.tenpaiPlayers.join(', ')}'),
                 ],
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () =>
-                        widget.socketService.sendAction({'type': 'next_round'}),
-                    child: const Text('次局'),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  List<Widget> _buildAgariResult(AgariResultData agari) {
+    final winner = gs.players[agari.winner];
+    final score = agari.scoreResult;
+    final yaku = score != null ? (score['yaku'] as List<dynamic>?) ?? [] : [];
+    final han = score?['han'] as int?;
+    final fu = score?['fu'] as int?;
+    final isYakuman = score?['isYakuman'] as bool? ?? false;
+    final payment = score?['payment'] as Map<String, dynamic>?;
+    final total = payment?['total'] as int?;
+    final tsumoKo = payment?['tsumoKo'] as int?;
+    final tsumoOya = payment?['tsumoOya'] as int?;
+    final label = score?['label'] as String?;
+
+    return [
+      // ツモ/ロン
+      Text(
+        agari.isTsumo ? 'ツモ' : 'ロン',
+        style: TextStyle(
+          color: Colors.orange.shade400,
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      const SizedBox(height: 8),
+      // 和了者名
+      Text(
+        '${_windName(winner.seatWind)} ${winner.name}',
+        style: const TextStyle(fontSize: 16),
+      ),
+      if (!agari.isTsumo && agari.loser >= 0)
+        Text(
+          '← ${gs.players[agari.loser].name} 放銃',
+          style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+        ),
+      const SizedBox(height: 12),
+
+      // 和了者の手牌
+      if (winner.closed != null && winner.closed!.isNotEmpty) ...[
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.black26,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '和了者の手牌',
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
+              ),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 2,
+                runSpacing: 2,
+                children: [
+                  ...winner.closed!.map((t) => TileWidget(tile: t, size: 26)),
+                  if (winner.tsumo != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: TileWidget(
+                        tile: winner.tsumo!,
+                        size: 26,
+                        selected: true,
+                      ),
+                    ),
+                ],
+              ),
+              // 副露
+              if (winner.melds.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: winner.melds.map((m) {
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: m.tiles.asMap().entries.map((e) {
+                        final ti = e.key;
+                        final t = e.value;
+                        final isCalled = m.calledTile != null &&
+                            t.index == m.calledTile!.index;
+                        final isFaceDown = (m.type == 'ankan') &&
+                            (ti == 0 || ti == 3);
+                        Widget w = isFaceDown
+                            ? Container(
+                                width: 22,
+                                height: 22 * 1.35,
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade900,
+                                  border: Border.all(color: Colors.amber.shade700),
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              )
+                            : TileWidget(tile: t, size: 22);
+                        if (isCalled) {
+                          w = Transform.rotate(angle: math.pi / 2, child: w);
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 1),
+                          child: w,
+                        );
+                      }).toList(),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+      ],
+
+      // 役一覧
+      if (yaku.isNotEmpty) ...[
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.black26,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            children: [
+              ...yaku.map((y) {
+                final yakuMap = y as Map<String, dynamic>;
+                final yakuName = yakuMap['name'] as String? ?? '';
+                final yakuHan = yakuMap['han'] as int? ?? 0;
+                final yakuIsYakuman = yakuMap['isYakuman'] as bool? ?? false;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(yakuName, style: const TextStyle(fontSize: 13)),
+                      Text(
+                        yakuIsYakuman ? '役満' : '$yakuHan翻',
+                        style: TextStyle(
+                          color: yakuIsYakuman
+                              ? Colors.red.shade400
+                              : Colors.amber.shade400,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              Divider(color: Colors.grey.shade700, height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '合計',
+                    style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+                  ),
+                  Text(
+                    isYakuman ? '役満' : '${han ?? 0}翻 ${fu ?? 0}符',
+                    style: TextStyle(
+                      color: Colors.orange.shade300,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+      ],
+
+      // 点数表示
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.orange.shade900.withValues(alpha: 0.3),
+              Colors.orange.shade800.withValues(alpha: 0.2),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          children: [
+            if (label != null && label.isNotEmpty)
+              Text(
+                label,
+                style: TextStyle(color: Colors.orange.shade300, fontSize: 14),
+              ),
+            Text(
+              total != null ? '$total点' : '${winner.score}点',
+              style: const TextStyle(
+                color: Colors.amber,
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            if (agari.isTsumo && tsumoKo != null)
+              Text(
+                tsumoOya != null
+                    ? '$tsumoKo点 / $tsumoOya点'
+                    : '$tsumoKo点 オール',
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+              ),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _buildDrawResult(DrawResultData draw) {
+    return [
+      const Text(
+        '流局',
+        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        draw.tenpaiPlayers.isEmpty
+            ? '全員ノーテン'
+            : 'テンパイ: ${draw.tenpaiPlayers.map((i) => gs.players[i].name).join(', ')}',
+        style: TextStyle(color: Colors.grey.shade300, fontSize: 14),
+      ),
+      if (draw.tenpaiPlayers.isNotEmpty && draw.tenpaiPlayers.length < 4)
+        Text(
+          'ノーテン罰符あり',
+          style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+        ),
+    ];
   }
 
   String _windName(int seatWind) {
