@@ -16,6 +16,7 @@ class DiscardPoolWidget extends StatelessWidget {
     this.tileWidth = 32,
     this.tileHeight = 44,
     this.position = DiscardPosition.bottom,
+    this.doraIds = const {},
   });
 
   final List<TileInstance> discards;
@@ -23,6 +24,8 @@ class DiscardPoolWidget extends StatelessWidget {
   final double tileWidth;
   final double tileHeight;
   final DiscardPosition position;
+  // ドラ牌IDセット（赤枠ハイライト表示）
+  final Set<int> doraIds;
 
   static List<List<TileInstance>> _toRows(List<TileInstance> list) {
     final rows = <List<TileInstance>>[];
@@ -129,6 +132,7 @@ class DiscardPoolWidget extends StatelessWidget {
                 child: TileWidget(
                   tile: tile,
                   size: math.min(tileWidth, tileHeight * 0.85),
+                  isDora: doraIds.contains(tile.id),
                 ),
               ),
             ),
@@ -141,6 +145,7 @@ class DiscardPoolWidget extends StatelessWidget {
           child: TileWidget(
             tile: tile,
             size: math.min(tileWidth, tileHeight * 0.85),
+            isDora: doraIds.contains(tile.id),
           ),
         );
       }

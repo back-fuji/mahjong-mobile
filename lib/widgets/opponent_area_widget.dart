@@ -18,6 +18,7 @@ class OpponentAreaWidget extends StatelessWidget {
     this.tileHeight = 38,
     this.faceDownSize = 28,
     this.showName = true,
+    this.doraIds = const {},
   });
 
   final PlayerFiltered player;
@@ -26,6 +27,8 @@ class OpponentAreaWidget extends StatelessWidget {
   final double tileHeight;
   final double faceDownSize;
   final bool showName;
+  // ドラ牌IDセット（捨て牌の赤枠ハイライト表示）
+  final Set<int> doraIds;
 
   @override
   Widget build(BuildContext context) {
@@ -113,6 +116,7 @@ class OpponentAreaWidget extends StatelessWidget {
               tileWidth: tileWidth,
               tileHeight: tileHeight,
               position: DiscardPosition.top,
+              doraIds: doraIds,
             ),
           ],
         );
@@ -185,6 +189,7 @@ class OpponentAreaWidget extends StatelessWidget {
               tileWidth: tileWidth,
               tileHeight: tileHeight,
               position: DiscardPosition.left,
+              doraIds: doraIds,
             ),
           ],
         );
@@ -201,6 +206,7 @@ class OpponentAreaWidget extends StatelessWidget {
               tileWidth: tileWidth,
               tileHeight: tileHeight,
               position: DiscardPosition.right,
+              doraIds: doraIds,
             ),
             const SizedBox(width: 4),
             Column(

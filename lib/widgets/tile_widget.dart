@@ -17,6 +17,31 @@ String tileLabel(int tileId, {bool isRed = false}) {
   return name;
 }
 
+/// ドラ指示牌からドラ牌IDを計算
+int indicatorToDora(int indicatorId) {
+  // 萬子 (0-8)
+  if (indicatorId >= 0 && indicatorId <= 8) {
+    return indicatorId == 8 ? 0 : indicatorId + 1;
+  }
+  // 筒子 (9-17)
+  if (indicatorId >= 9 && indicatorId <= 17) {
+    return indicatorId == 17 ? 9 : indicatorId + 1;
+  }
+  // 索子 (18-26)
+  if (indicatorId >= 18 && indicatorId <= 26) {
+    return indicatorId == 26 ? 18 : indicatorId + 1;
+  }
+  // 字牌 東南西北 (27-30) → 北東南西の順でサイクル
+  if (indicatorId >= 27 && indicatorId <= 30) {
+    return indicatorId == 30 ? 27 : indicatorId + 1;
+  }
+  // 字牌 白發中 (31-33) → 中白發の順でサイクル
+  if (indicatorId >= 31 && indicatorId <= 33) {
+    return indicatorId == 33 ? 31 : indicatorId + 1;
+  }
+  return indicatorId;
+}
+
 /// Asset path for tile image. Matches mahjong-app getTileImagePath (tiles from public/tiles).
 String tileAssetPath(int tileId, {bool isRed = false}) {
   if (isRed) {
@@ -55,12 +80,14 @@ class TileWidget extends StatelessWidget {
     required this.tile,
     this.size = 40,
     this.selected = false,
+    this.isDora = false,
     this.onTap,
   });
 
   final TileInstance tile;
   final double size;
   final bool selected;
+  final bool isDora;
   final VoidCallback? onTap;
 
   @override
@@ -74,12 +101,18 @@ class TileWidget extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: selected ? Colors.amber.shade700 : Colors.transparent,
-          width: selected ? 3 : 0,
+          color: selected
+              ? Colors.amber.shade700
+              : isDora
+                  ? Colors.red.shade400
+                  : Colors.transparent,
+          width: selected ? 3 : isDora ? 2 : 0,
         ),
         boxShadow: selected
             ? [BoxShadow(color: Colors.amber.shade200.withValues(alpha: 0.5), blurRadius: 4)]
-            : null,
+            : isDora
+                ? [BoxShadow(color: Colors.red.shade300.withValues(alpha: 0.4), blurRadius: 4)]
+                : null,
       ),
       clipBehavior: Clip.antiAlias,
       child: Image.asset(

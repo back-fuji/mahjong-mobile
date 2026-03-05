@@ -152,6 +152,12 @@ class _GameScreenState extends State<GameScreen> {
       (a) => ['pon', 'chi', 'ron'].contains(a),
     );
 
+    // ドラ指示牌からドラ牌IDセットを計算
+    final doraIds = <int>{};
+    for (final indicator in gs.doraIndicators) {
+      doraIds.add(indicatorToDora(indicator.id));
+    }
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -186,6 +192,7 @@ class _GameScreenState extends State<GameScreen> {
                             tileWidth: 32,
                             tileHeight: 44,
                             faceDownSize: 28,
+                            doraIds: doraIds,
                           ),
                         ),
                         // Middle: left | center | right
@@ -204,6 +211,7 @@ class _GameScreenState extends State<GameScreen> {
                                       tileWidth: 28,
                                       tileHeight: 38,
                                       faceDownSize: 20,
+                                      doraIds: doraIds,
                                     ),
                                   ),
                                 ),
@@ -230,6 +238,7 @@ class _GameScreenState extends State<GameScreen> {
                                       tileWidth: 28,
                                       tileHeight: 38,
                                       faceDownSize: 20,
+                                      doraIds: doraIds,
                                     ),
                                   ),
                                 ),
@@ -308,6 +317,7 @@ class _GameScreenState extends State<GameScreen> {
                             tileWidth: 36,
                             tileHeight: 50,
                             position: DiscardPosition.bottom,
+                            doraIds: doraIds,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -318,6 +328,7 @@ class _GameScreenState extends State<GameScreen> {
                           onTileTap: (tile) => _onHandTileTap(tile, canDiscard),
                           tileSize: 44,
                           dimmedTileIds: myPlayer.kuikaeDisallowedTiles ?? [],
+                          doraIds: doraIds,
                         ),
                       ],
                     ),

@@ -13,6 +13,7 @@ class HandWidget extends StatelessWidget {
     required this.onTileTap,
     this.tileSize = 36,
     this.dimmedTileIds = const [],
+    this.doraIds = const {},
   });
 
   final List<TileInstance> closed;
@@ -22,6 +23,8 @@ class HandWidget extends StatelessWidget {
   final double tileSize;
   // 喰い替え禁止牌のIDリスト（Opacity 0.35でグレーアウト表示）
   final List<int> dimmedTileIds;
+  // ドラ牌IDセット（赤枠ハイライト表示）
+  final Set<int> doraIds;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +44,7 @@ class HandWidget extends StatelessWidget {
               tile: t,
               size: tileSize,
               selected: selected,
+              isDora: doraIds.contains(t.id),
               onTap: () => onTileTap(t),
             ),
           ),
