@@ -12,6 +12,7 @@ import '../widgets/center_info_widget.dart';
 import '../widgets/discard_pool_widget.dart';
 import '../widgets/hand_widget.dart';
 import '../widgets/opponent_area_widget.dart';
+import '../widgets/announcement_overlay.dart';
 import '../widgets/tile_widget.dart';
 
 class GameScreen extends StatefulWidget {
@@ -35,6 +36,10 @@ class _GameScreenState extends State<GameScreen> {
   bool _showChiSelector = false;
   // リーチ後の自動ツモ切り二重送信防止フラグ
   bool _didAutoDiscardRiichi = false;
+  // アナウンスオーバーレイ用
+  String? _announcementText;
+  int _prevMeldTotal = 0;
+  bool _prevMyRiichi = false;
 
   GameStateFiltered get gs => widget.gameState;
   int get myIndex => gs.myIndex;
@@ -49,12 +54,15 @@ class _GameScreenState extends State<GameScreen> {
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+    _prevMeldTotal = widget.gameState.players.fold<int>(0, (s, p) => s + p.melds.length);
+    _prevMyRiichi = widget.gameState.players[widget.gameState.myIndex].isRiichi;
   }
 
   @override
   void didUpdateWidget(GameScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     _checkAutoDiscard();
+    _checkAnnouncements(oldWidget);
   }
 
   /// リーチ中のツモ番で自動ツモ切りを行う
@@ -85,6 +93,50 @@ class _GameScreenState extends State<GameScreen> {
     } else if (!isRiichiDiscardTurn) {
       _didAutoDiscardRiichi = false;
     }
+  }
+
+  /// 鳴き・リーチのアナウンスオーバーレイを表示する
+  void _checkAnnouncements(GameScreen oldWidget) {
+    // 鳴き検知: メルド総数の増加を確認
+    final newTotal = gs.players.fold<int>(0, (s, p) => s + p.melds.length);
+    if (newTotal > _prevMeldTotal) {
+      for (int i = 0; i < gs.players.length; i++) {
+        final newCount = gs.players[i].melds.length;
+        final oldCount = i < oldWidget.gameState.players.length
+            ? oldWidget.gameState.players[i].melds.length
+            : 0;
+        if (newCount > oldCount && gs.players[i].melds.isNotEmpty) {
+          final meld = gs.players[i].melds.last;
+          final callName = meld.type == 'chi'
+              ? 'チー'
+              : meld.type == 'pon'
+                  ? 'ポン'
+                  : (meld.type == 'minkan' ||
+                          meld.type == 'ankan' ||
+                          meld.type == 'shouminkan')
+                      ? 'カン'
+                      : null;
+          if (callName != null) {
+            setState(() => _announcementText = callName);
+            Future.delayed(const Duration(milliseconds: 800), () {
+              if (mounted) setState(() => _announcementText = null);
+            });
+          }
+          break;
+        }
+      }
+    }
+    _prevMeldTotal = newTotal;
+
+    // リーチ検知: 自分のリーチ状態変化
+    final myRiichi = gs.players[gs.myIndex].isRiichi;
+    if (myRiichi && !_prevMyRiichi) {
+      setState(() => _announcementText = 'リーチ');
+      Future.delayed(const Duration(milliseconds: 1200), () {
+        if (mounted) setState(() => _announcementText = null);
+      });
+    }
+    _prevMyRiichi = myRiichi;
   }
 
   @override
@@ -355,6 +407,16 @@ class _GameScreenState extends State<GameScreen> {
                           ),
                         ),
                       ),
+                    ),
+                  ),
+                ),
+              // アナウンスオーバーレイ
+              if (_announcementText != null)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: AnnouncementOverlay(
+                      key: ValueKey(_announcementText),
+                      text: _announcementText!,
                     ),
                   ),
                 ),
