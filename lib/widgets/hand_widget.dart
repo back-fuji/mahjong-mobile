@@ -12,6 +12,7 @@ class HandWidget extends StatelessWidget {
     required this.selectedTileIndex,
     required this.onTileTap,
     this.tileSize = 36,
+    this.dimmedTileIds = const [],
   });
 
   final List<TileInstance> closed;
@@ -19,6 +20,8 @@ class HandWidget extends StatelessWidget {
   final int? selectedTileIndex;
   final void Function(TileInstance tile) onTileTap;
   final double tileSize;
+  // 喰い替え禁止牌のIDリスト（Opacity 0.35でグレーアウト表示）
+  final List<int> dimmedTileIds;
 
   @override
   Widget build(BuildContext context) {
@@ -29,13 +32,17 @@ class HandWidget extends StatelessWidget {
       alignment: WrapAlignment.center,
       children: all.map((t) {
         final selected = selectedTileIndex != null && t.index == selectedTileIndex;
+        final isDimmed = dimmedTileIds.contains(t.id);
         return Padding(
           padding: const EdgeInsets.all(2),
-          child: TileWidget(
-            tile: t,
-            size: tileSize,
-            selected: selected,
-            onTap: () => onTileTap(t),
+          child: Opacity(
+            opacity: isDimmed ? 0.35 : 1.0,
+            child: TileWidget(
+              tile: t,
+              size: tileSize,
+              selected: selected,
+              onTap: () => onTileTap(t),
+            ),
           ),
         );
       }).toList(),

@@ -227,6 +227,7 @@ class _GameScreenState extends State<GameScreen> {
                           selectedTileIndex: _selectedTile?.index,
                           onTileTap: (tile) => _onHandTileTap(tile, canDiscard),
                           tileSize: 44,
+                          dimmedTileIds: myPlayer.kuikaeDisallowedTiles ?? [],
                         ),
                       ],
                     ),
