@@ -33,6 +33,8 @@ class GameScreen extends StatefulWidget {
 class _GameScreenState extends State<GameScreen> {
   TileInstance? _selectedTile;
   bool _showChiSelector = false;
+  // リーチ後の自動ツモ切り二重送信防止フラグ
+  bool _didAutoDiscardRiichi = false;
 
   GameStateFiltered get gs => widget.gameState;
   int get myIndex => gs.myIndex;
@@ -47,6 +49,42 @@ class _GameScreenState extends State<GameScreen> {
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+  }
+
+  @override
+  void didUpdateWidget(GameScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _checkAutoDiscard();
+  }
+
+  /// リーチ中のツモ番で自動ツモ切りを行う
+  void _checkAutoDiscard() {
+    final myPlayer = gs.players[gs.myIndex];
+    final isRiichiDiscardTurn = gs.phase == 'discard' &&
+        gs.currentPlayer == gs.myIndex &&
+        myPlayer.isRiichi &&
+        myPlayer.tsumo != null;
+
+    if (isRiichiDiscardTurn && !_didAutoDiscardRiichi) {
+      _didAutoDiscardRiichi = true;
+      Future.delayed(const Duration(milliseconds: 120), () {
+        if (!mounted) return;
+        final currentPlayer = gs.players[gs.myIndex];
+        if (gs.phase == 'discard' &&
+            gs.currentPlayer == gs.myIndex &&
+            currentPlayer.isRiichi) {
+          final tsumo = currentPlayer.tsumo;
+          if (tsumo != null) {
+            widget.socketService.sendAction({
+              'type': 'discard',
+              'tileIndex': tsumo.index,
+            });
+          }
+        }
+      });
+    } else if (!isRiichiDiscardTurn) {
+      _didAutoDiscardRiichi = false;
+    }
   }
 
   @override
