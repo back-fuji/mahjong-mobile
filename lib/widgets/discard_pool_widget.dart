@@ -109,15 +109,42 @@ class DiscardPoolWidget extends StatelessWidget {
     double rotationDeg = 0,
   }) {
     return row.asMap().entries.map((e) {
+      final colIndex = e.key;
       final tile = e.value;
-      Widget w = SizedBox(
-        width: tileWidth,
-        height: tileHeight,
-        child: TileWidget(
-          tile: tile,
-          size: math.min(tileWidth, tileHeight * 0.85),
-        ),
-      );
+      final globalIdx = rowIndex * 6 + colIndex;
+      final isRiichi = riichiDiscardIndex >= 0 && globalIdx == riichiDiscardIndex;
+
+      Widget w;
+      if (isRiichi) {
+        // リーチ宣言牌: 90度回転して横向き表示（サイズを入れ替え）
+        w = SizedBox(
+          width: tileHeight,
+          height: tileWidth,
+          child: Center(
+            child: Transform.rotate(
+              angle: math.pi / 2,
+              child: SizedBox(
+                width: tileWidth,
+                height: tileHeight,
+                child: TileWidget(
+                  tile: tile,
+                  size: math.min(tileWidth, tileHeight * 0.85),
+                ),
+              ),
+            ),
+          ),
+        );
+      } else {
+        w = SizedBox(
+          width: tileWidth,
+          height: tileHeight,
+          child: TileWidget(
+            tile: tile,
+            size: math.min(tileWidth, tileHeight * 0.85),
+          ),
+        );
+      }
+
       if (rotationDeg != 0) {
         w = Transform.rotate(angle: rotationDeg * math.pi / 180, child: w);
       }
