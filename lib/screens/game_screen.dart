@@ -158,6 +158,9 @@ class _GameScreenState extends State<GameScreen> {
       doraIds.add(indicatorToDora(indicator.id));
     }
 
+    // 最後の捨て牌のプレイヤーインデックス（ハイライト表示用）
+    final lastDiscardPlayerIndex = gs.lastDiscard?.playerIndex;
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -193,6 +196,7 @@ class _GameScreenState extends State<GameScreen> {
                             tileHeight: 44,
                             faceDownSize: 28,
                             doraIds: doraIds,
+                            highlightLastDiscard: lastDiscardPlayerIndex == _rel(2),
                           ),
                         ),
                         // Middle: left | center | right
@@ -212,6 +216,7 @@ class _GameScreenState extends State<GameScreen> {
                                       tileHeight: 38,
                                       faceDownSize: 20,
                                       doraIds: doraIds,
+                                      highlightLastDiscard: lastDiscardPlayerIndex == _rel(3),
                                     ),
                                   ),
                                 ),
@@ -239,6 +244,7 @@ class _GameScreenState extends State<GameScreen> {
                                       tileHeight: 38,
                                       faceDownSize: 20,
                                       doraIds: doraIds,
+                                      highlightLastDiscard: lastDiscardPlayerIndex == _rel(1),
                                     ),
                                   ),
                                 ),
@@ -318,6 +324,7 @@ class _GameScreenState extends State<GameScreen> {
                             tileHeight: 50,
                             position: DiscardPosition.bottom,
                             doraIds: doraIds,
+                            highlightLastDiscard: lastDiscardPlayerIndex == myIndex,
                           ),
                         ),
                         const SizedBox(height: 8),

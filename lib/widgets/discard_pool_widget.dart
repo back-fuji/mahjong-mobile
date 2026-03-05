@@ -17,6 +17,7 @@ class DiscardPoolWidget extends StatelessWidget {
     this.tileHeight = 44,
     this.position = DiscardPosition.bottom,
     this.doraIds = const {},
+    this.highlightLastDiscard = false,
   });
 
   final List<TileInstance> discards;
@@ -26,6 +27,8 @@ class DiscardPoolWidget extends StatelessWidget {
   final DiscardPosition position;
   // ドラ牌IDセット（赤枠ハイライト表示）
   final Set<int> doraIds;
+  // 最後の捨て牌をハイライト（ロン対象牌の視覚化）
+  final bool highlightLastDiscard;
 
   static List<List<TileInstance>> _toRows(List<TileInstance> list) {
     final rows = <List<TileInstance>>[];
@@ -116,6 +119,10 @@ class DiscardPoolWidget extends StatelessWidget {
       final tile = e.value;
       final globalIdx = rowIndex * 6 + colIndex;
       final isRiichi = riichiDiscardIndex >= 0 && globalIdx == riichiDiscardIndex;
+      // 最後の捨て牌かどうか（ハイライト表示用）
+      final isLast = highlightLastDiscard &&
+          discards.isNotEmpty &&
+          globalIdx == discards.length - 1;
 
       Widget w;
       if (isRiichi) {
@@ -133,6 +140,7 @@ class DiscardPoolWidget extends StatelessWidget {
                   tile: tile,
                   size: math.min(tileWidth, tileHeight * 0.85),
                   isDora: doraIds.contains(tile.id),
+                  selected: isLast,
                 ),
               ),
             ),
@@ -146,6 +154,7 @@ class DiscardPoolWidget extends StatelessWidget {
             tile: tile,
             size: math.min(tileWidth, tileHeight * 0.85),
             isDora: doraIds.contains(tile.id),
+            selected: isLast,
           ),
         );
       }
